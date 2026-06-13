@@ -131,6 +131,43 @@ async def run_research_phase(
                     continue
 
                 research, emails = result
+                
+                # Check email validity
+                poc_email = research.get("poc_email", "").strip().lower()
+                has_email = poc_email and poc_email not in ("unknown", "missing", "none", "")
+                
+                # If newly discovered, only add to master input CSV if we have at least an email!
+                if company.get("is_discovered"):
+                    if not has_email:
+                        logger.info(f"Skipping newly discovered company '{company['Company Name']}' - no email found.")
+                        pbar.update(1)
+                        continue
+                    else:
+                        try:
+                            import csv
+                            with open(settings.INPUT_CSV, "a", newline="", encoding="utf-8") as fh:
+                                writer = csv.writer(fh)
+                                # Append to master input.csv
+                                writer.writerow([
+                                    company["Company Name"],
+                                    research.get("poc_name", "Unknown"),
+                                    research.get("poc_email", "Missing"),
+                                    research.get("poc_phone", "Missing"),
+                                    "",
+                                    "",
+                                    company["Website"],
+                                    "Prasun Jha",
+                                    "FALSE",
+                                    "",
+                                    "FALSE",
+                                    "",
+                                    "",
+                                    ""
+                                ])
+                            logger.info(f"Appended newly discovered company '{company['Company Name']}' with email '{poc_email}' to master CSV.")
+                        except Exception as e:
+                            logger.error(f"Failed to append '{company['Company Name']}' to master CSV: {e}")
+
                 checkpoint.mark_processed(
                     company["Company Name"],
                     research,
@@ -243,28 +280,6 @@ async def main():
         if not discovered:
             logger.error("No companies discovered. Exiting.")
             return
-
-        import csv
-        logger.info(f"Appending {len(discovered)} discovered companies to {settings.INPUT_CSV}")
-        with open(settings.INPUT_CSV, "a", newline="", encoding="utf-8") as fh:
-            writer = csv.writer(fh)
-            for c in discovered:
-                writer.writerow([
-                    c["Company Name"],
-                    "Unknown",
-                    "Missing",
-                    "Missing",
-                    "",
-                    "",
-                    c["Website"],
-                    "Prasun Jha",
-                    "FALSE",
-                    "",
-                    "FALSE",
-                    "",
-                    "",
-                    ""
-                ])
 
         companies = discovered
         if args.limit:

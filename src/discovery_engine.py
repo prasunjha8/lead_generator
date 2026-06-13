@@ -97,8 +97,10 @@ async def discover_companies(
                 "POC": "Unknown",
                 "E-Mail": "Missing",
                 "Phone No.": "Missing",
-                "LinkedIn": ""
+                "LinkedIn": "",
+                "is_discovered": True
             })
+
 
     logger.info(f"Successfully discovered {len(discovered)} new targets.")
     return discovered

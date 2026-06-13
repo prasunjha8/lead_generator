@@ -54,10 +54,14 @@ def _safe(val) -> str:
 
 def write_research_csv(rows: List[Dict], path: Path):
     path.parent.mkdir(parents=True, exist_ok=True)
+    written = 0
     with open(path, "w", newline="", encoding="utf-8") as fh:
         writer = csv.DictWriter(fh, fieldnames=RESEARCH_COLS, extrasaction="ignore")
         writer.writeheader()
         for row in rows:
+            email = _safe(row.get("poc_email")).strip().lower()
+            if not email or email in ("unknown", "none", "missing", ""):
+                continue
             writer.writerow({
                 "Company Name":          _safe(row.get("_company_name") or row.get("company_name")),
                 "Website":               _safe(row.get("website")),
@@ -78,12 +82,14 @@ def write_research_csv(rows: List[Dict], path: Path):
                 "Confidence":            _safe(row.get("confidence")),
                 "Notes":                 _safe(row.get("notes")),
             })
-    logger.info(f"Research CSV written: {path} ({len(rows)} rows)")
+            written += 1
+    logger.info(f"Research CSV written: {path} ({written} rows)")
 
 
 def write_outreach_csv(rows: List[Dict], path: Path):
     """rows is a list of merged (company + research + email) dicts."""
     path.parent.mkdir(parents=True, exist_ok=True)
+    written = 0
     with open(path, "w", newline="", encoding="utf-8") as fh:
         writer = csv.DictWriter(fh, fieldnames=OUTREACH_COLS, extrasaction="ignore")
         writer.writeheader()
@@ -92,13 +98,17 @@ def write_outreach_csv(rows: List[Dict], path: Path):
             e = row.get("emails", {})
             c = row.get("company", {})
             
-            poc_name = r.get("poc_name")
-            if not poc_name or poc_name.lower().strip() in ("unknown", "none"):
-                poc_name = c.get("POC")
-                
             poc_email = r.get("poc_email")
             if not poc_email or poc_email.lower().strip() in ("unknown", "none"):
                 poc_email = c.get("E-Mail")
+                
+            email_val = _safe(poc_email).strip().lower()
+            if not email_val or email_val in ("unknown", "none", "missing", ""):
+                continue
+                
+            poc_name = r.get("poc_name")
+            if not poc_name or poc_name.lower().strip() in ("unknown", "none"):
+                poc_name = c.get("POC")
                 
             poc_phone = r.get("poc_phone")
             if not poc_phone or poc_phone.lower().strip() in ("unknown", "none"):
@@ -115,7 +125,8 @@ def write_outreach_csv(rows: List[Dict], path: Path):
                 "Sponsorship Fit Score": _safe(r.get("sponsorship_fit_score")),
                 "Priority Category":  _safe(r.get("priority_category")),
             })
-    logger.info(f"Outreach CSV written: {path} ({len(rows)} rows)")
+            written += 1
+    logger.info(f"Outreach CSV written: {path} ({written} rows)")
 
 
 def update_master_csv(research_rows: List[Dict], path: Path):

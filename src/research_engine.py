@@ -129,7 +129,8 @@ async def research_company(
     tasks.append(search_company_duckduckgo(general_query))
     
     # Task 2: contact / POC / sponsorship search
-    contact_query = f'"{name}" (sponsorship OR CSR OR "marketing manager" OR "partnerships" OR "university relations" OR contact) India'
+    contact_query = f'"{name}" ("marketing manager" OR "CSR" OR "partnerships" OR "human resources" OR "recruitment" OR CEO OR Founder) (site:linkedin.com/in OR site:apollo.io/people OR "email" OR "contact") India'
+
     logger.info(f"  Searching DuckDuckGo for contacts: {name}")
     tasks.append(search_company_duckduckgo(contact_query))
 
